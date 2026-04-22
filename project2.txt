@@ -1,0 +1,89 @@
+## 11. Regression Modelling
+
+### Overview
+
+Once the dataset had been cleaned, the next step was to forecast one selected series:
+
+Index Numbers ; Employee households ; All groups
+
+This was chosen because it gives a broad measure of working household living costs and showed a clear long-term trend in earlier visualisations.
+
+Two models were tested:
+
+- Linear Regression: Simple baseline model for trend data
+- Random Forest: Machine learning comparison model
+
+### Feature Construction
+
+To help forecasting, lagged values were created from previous quarters.
+
+model_df["Quarter_Number"] = range(len(model_df))
+model_df["Lag1"] = model_df[target_col].shift(1)
+model_df["Lag2"] = model_df[target_col].shift(2)
+model_df = model_df.dropna()
+
+This gives the model access to recent history while keeping the setup simple.
+
+### Train/Test Split
+
+Because this is time-series data, rows were split in chronological order rather than random order.
+
+split_index = int(len(model_df) * 0.8)
+
+X_train = X.iloc[:split_index]
+X_test = X.iloc[split_index:]
+y_train = y.iloc[:split_index]
+y_test = y.iloc[split_index:]
+
+This avoids future values leaking into the training set.
+
+## 12. Model Fitting
+
+Linear Regression
+
+linear_model = LinearRegression()
+linear_model.fit(X_train, y_train)
+pred_lr = linear_model.predict(X_test)
+
+Random Forest
+
+rf_model = RandomForestRegressor(n_estimators=200, random_state=42)
+rf_model.fit(X_train, y_train)
+pred_rf = rf_model.predict(X_test)
+
+## 13. Results
+
+Linear Regression
+MAE: 0.706
+RMSE: 0.903
+R2: 0.987
+
+Random Forest
+MAE: 11.750
+RMSE: 14.288
+R2: -2.157
+
+Interpretation:
+Linear Regression performed substantially better across all metrics.
+
+## 14. Statistical Testing
+
+lr_errors = abs(y_test - pred_lr)
+rf_errors = abs(y_test - pred_rf)
+
+t_stat, p_value = ttest_rel(lr_errors, rf_errors)
+
+T Statistic: -6.123
+P Value: 0.000
+
+Because p < 0.05, the null hypothesis was rejected.
+
+## 15. Forecasting Next Four Quarters
+
+Q1: 100.27
+Q2: 100.41
+Q3: 100.51
+Q4: 100.59
+
+Interpretation:
+The forecast suggests living costs may continue increasing gradually over the next year.
